@@ -3,55 +3,54 @@
 Hammer Tech JSON
 ===============================
 
-The ``tech.json`` for a given technology sets up some general information about the install of the PDK, sets up DRC rule decks, sets up pointers to PDK files, and supplies technology stackup information. For a full schema that the tech JSON supports, please see ``src/hammer-tech/schema.json``.
+The ``tech.json`` for a given technology sets up some general information about the install of the PDK, sets up DRC rule decks, sets up pointers to PDK files, and supplies technology stackup information. 
+For the full schema of the tech JSON, please see the :ref:`full_schema` section below, which is derived from the ``TechJSON`` Pydantic BaseModel in ``hammer/tech/__init__.py``.
 
 Technology Install
 ---------------------------------
 
-The user may supply the PDK to Hammer as an already extracted directory and/or as a tarball that Hammer can automatically extract. Setting ``technology.TECH_NAME.`` ``install_dir`` and/or ``tarball_dir`` (key is setup in the defaults.yml) will fill in as the path prefix for paths supplied to PDK files in the rest of the ``tech.json``. :numref:`install-example` shows an example of the installs and tarballs from the ASAP7 plugin.
+The user may supply the PDK to Hammer as an already extracted directory and/or as a tarball that Hammer can automatically extract. Setting ``technology.TECH_NAME.`` ``install_dir`` and/or ``tarball_dir`` (key is setup in the defaults.yml) will fill in as the path prefix for paths supplied to PDK files in the rest of the ``tech.json``.
+Below is an example of the installs and tarballs from the ASAP7 plugin.
 
-.. _install-example:
 .. code-block:: json
 
   "name": "ASAP7 Library",
   "grid_unit": "0.001",
-  "time_unit": "1 ps",
   "installs": [
     {
-      "path": "$PDK",
-      "base var": "technology.asap7.pdk_install_dir"
+      "id": "$PDK",
+      "path": "technology.asap7.pdk_install_dir"
     },
     {
-      "path": "$STDCELLS",
-      "base var": "technology.asap7.stdcell_install_dir"
-    },
-    {
-      "path": "tech-asap7-cache",
-      "base var": ""
+      "id": "$STDCELLS",
+      "path": "technology.asap7.stdcell_install_dir"
     }
   ],
   "tarballs": [
     {
-      "path": "ASAP7_PDK_CalibreDeck.tar",
+      "root": {
+        "id": "ASAP7_PDK_CalibreDeck.tar",
+        "path": "technology.asap7.tarball_dir"
+      },
       "homepage": "http://asap.asu.edu/asap/",
-      "base var": "technology.asap7.tarball_dir"
+      "optional": true
     }
   ],
 
-Notice how in the installs, there are two directories holding the PDK files and standard cell files. The ``tech-asap7-cache`` with an empty ``base var`` denotes files that exist in the tech cache, which are placed there by a post-installation PDK hacking script (see ASAP7's ``post_install_script`` method). Finally, the encrypted Calibre decks are provided in a tarball.
+The ``id`` field is used within the file listings further down in the file to prefix ``path``, as shown in detail below. If the file listing begins with ``cache``, then this denotes files that exist in the tech cache, which are generally placed there by the tech plugin's post-installation script (see ASAP7's ``post_install_script`` method). Finally, the encrypted Calibre decks are provided in a tarball and denoted as optional.
 
 DRC/LVS Deck Setup
 ---------------------------------
 
-As many DRC & LVS decks for as many tools can be specified in the ``drc decks`` and ``lvs decks`` keys. Additional DRC/LVS commands can be appended to the generated run files by specifying raw text in the ``additional_drc_text`` and ``additional_lvs_text`` keys. :numref:`deck-example` shows an example of an LVS deck from the ASAP7 plugin.
+As many DRC & LVS decks for as many tools can be specified in the ``drc decks`` and ``lvs decks`` keys. Additional DRC/LVS commands can be appended to the generated run files by specifying raw text in the ``additional_drc_text`` and ``additional_lvs_text`` keys. 
+Below is an example of an LVS deck from the ASAP7 plugin.
 
-.. _deck-example:
 .. code-block:: json
 
-  "lvs decks": [
+  "lvs_decks": [
     {
-      "tool name": "calibre",
-      "deck name": "all_lvs",
+      "tool_name": "calibre",
+      "deck_name": "all_lvs",
       "path": "ASAP7_PDK_CalibreDeck.tar/calibredecks_r1p7/calibre/ruledirs/lvs/lvsRules_calibre_asap7.rul"
     }
   ],
@@ -62,15 +61,14 @@ The file pointers, in this case, use the tarball prefix because Hammer will be e
 Library Setup
 ---------------------------------
 
-The ``libraries`` key also must be setup in the JSON plugin. This will tell Hammer where to find all of the relevant files for standard cells and other blocks for the VLSI flow. :numref:`library-example` shows an example of the start of the library setup and one entry from the ASAP7 plugin.
+The ``libraries`` key also must be setup in the JSON plugin. This will tell Hammer where to find all of the relevant files for standard cells and other blocks for the VLSI flow. 
+Below is an example of the start of the library setup and one entry from the ASAP7 plugin.
 
-
-.. _library-example:
 .. code-block:: json
 
   "libraries": [
     {
-      "lef file": "$STDCELLS/techlef_misc/asap7_tech_4x_201209.lef",
+      "lef_file": "$STDCELLS/techlef_misc/asap7_tech_4x_201209.lef",
       "provides": [
         {
           "lib_type": "technology"
@@ -78,13 +76,13 @@ The ``libraries`` key also must be setup in the JSON plugin. This will tell Hamm
       ]
     },
     {
-      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_RVT_TT_nldm_201020.lib.gz",
-      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_SIMPLE_RVT_TT_201020.v",
-      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
-      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
-      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
-      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
-      "spice model file": {
+      "nldm_liberty_file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_RVT_TT_nldm_201020.lib.gz",
+      "verilog_sim": "$STDCELLS/Verilog/asap7sc7p5t_SIMPLE_RVT_TT_201020.v",
+      "lef_file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice_file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds_file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc_techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
+      "spice_model_file": {
         "path": "$PDK/models/hspice/7nm_TT.pm"
       },
       "corner": {
@@ -108,14 +106,20 @@ The file pointers, in this case, use the ``$PDK`` and ``$STDCELLS`` prefix as de
 The ``provides`` key has several sub-keys that tell Hammer what kind of library this is (examples include ``stdcell``, ``fiducials``, ``io pad cells``, ``bump``, and ``level shifters``) and the threshold voltage flavor of the cells, if applicable.
 Adding the tech LEF for the technology with the ``lib_type`` set as ``technology`` is necessary for place and route.
 
-..
-TODO: ADD INFO ABOUT LIBRARY FILTERS
+.. _filters:
+
+Library Filters
+~~~~~~~~~~~~~~~
+
+Library filters are defined in the ``LibraryFilter`` class in ``hammer/tech/__init__.py``. These allow you to filter the entire set of libraries based on specific conditions, such as a file type or corner. Additional functions can be used to extract paths, strings, sort, and post-process the filtered libraries.
+
+For a list of pre-built library filters, refer to the properties in the ``LibraryFilterHolder`` class in the same file, accessed as ``hammer.tech.filters.<filter_method>``
 
 Stackup
 --------------------------------
-The ``stackups`` sets up the important metal layer information for Hammer to use. :numref:`stackups-example` shows an example of one metal layer in the ``metals`` list from the ASAP7 example tech plugin.   
+The ``stackups`` sets up the important metal layer information for Hammer to use. 
+Below is an example of one metal layer in the ``metals`` list from the ASAP7 example tech plugin.   
 
-.. _stackups-example:
 .. code-block:: json
 
         {"name": "M3", "index": 3, "direction": "vertical", "min_width": 0.072, "pitch": 0.144, "offset": 0.0, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.072}], "power_strap_width_table": [0.072, 0.36, 0.648, 0.936, 1.224, 1.512]}
@@ -127,7 +131,6 @@ Sites
 --------------------------------
 The ``sites`` field specifies the unit standard cell size of the technology for Hammer.
 
-.. _sites-example:
 .. code-block:: json
 
   "sites": [
@@ -138,16 +141,16 @@ This is an example from the ASAP7 tech plugin in which the ``name`` parameter sp
 
 Special Cells
 --------------------------------
-The ``special cells`` field specifies a set of cells in the technology that have special functions. :numref:`special-cells-example` shows a subset of the ASAP7 tech plugin for 2 types of cells: ``tapcell`` and ``stdfiller``.
+The ``special_cells`` field specifies a set of cells in the technology that have special functions. 
+The example below shows a subset of the ASAP7 tech plugin for 2 types of cells: ``tapcell`` and ``stdfiller``.
 
-.. _special-cells-example:
 .. code-block:: json
 
-  "special cells": [
+  "special_cells": [
     {"cell_type": "tapcell", "name": ["TAPCELL_ASAP7_75t_L"]},
     {"cell_type": "stdfiller", "name": ["FILLER_ASAP7_75t_R", "FILLER_ASAP7_75t_L", "FILLER_ASAP7_75t_SL", "FILLER_ASAP7_75t_SRAM", "FILLERxp5_ASAP7_75t_R", "FILLERxp5_ASAP7_75t_L", "FILLERxp5_ASAP7_75t_SL", "FILLERxp5_ASAP7_75t_SRAM"]},
 
-There are 8 ``cell_type`` s supported: ``tiehicell``, ``tielocell``, ``tiehilocell``, ``endcap``, ``iofiller``, ``stdfiller``, ``decap``, and ``tapcell``. Depending on the tech/tool, some of these cell types can only have 1 cell in the ``name`` list.
+See the ``SpecialCell`` subsection in the :ref:`full_schema` for a list of special cell types. Depending on the tech/tool, some of these cell types can only have 1 cell in the ``name`` list.
 
 There is an optional ``size`` list. For each element in its corresponding ``name`` list, a size (type: str) can be given. An example of how this is used is for ``decap`` cells, where each listed cell has a typical capacitance, which a place and route tool can then use to place decaps to hit a target total decapacitance value. After characterizing the ASAP7 decaps using Voltus, the nominal capacitance is filled into the ``size`` list:
 
@@ -157,12 +160,12 @@ There is an optional ``size`` list. For each element in its corresponding ``name
 
 Don't Use, Physical-Only Cells
 --------------------------------
-The ``dont use list`` is used to denote cells that should be excluded due to things like bad timing models or layout.
-The ``physical only cells list`` is used to denote cells that contain only physical geometry, which means that they should be excluded from netlisting for simulation and LVS. Examples from the ASAP7 plugin are below:
+The ``dont_use_list`` is used to denote cells that should be excluded due to things like bad timing models or layout.
+The ``physical_only_cells_list`` is used to denote cells that contain only physical geometry, which means that they should be excluded from netlisting for simulation and LVS. Examples from the ASAP7 plugin are below:
 
 .. code-block:: json
 
-  "dont use list": [
+  "dont_use_list": [
       "ICGx*DC*",
       "AND4x1*",
       "SDFLx2*",
@@ -185,9 +188,19 @@ The ``physical only cells list`` is used to denote cells that contain only physi
       "AO21x2*",
       "AOI32xp33*"
   ],
-  "physical only cells list": [
+  "physical_only_cells_list": [
     "TAPCELL_ASAP7_75t_R", "TAPCELL_ASAP7_75t_L", "TAPCELL_ASAP7_75t_SL", "TAPCELL_ASAP7_75t_SRAM",
     "TAPCELL_WITH_FILLER_ASAP7_75t_R", "TAPCELL_WITH_FILLER_ASAP7_75t_L", "TAPCELL_WITH_FILLER_ASAP7_75t_SL", "TAPCELL_WITH_FILLER_ASAP7_75t_SRAM",
     "FILLER_ASAP7_75t_R", "FILLER_ASAP7_75t_L", "FILLER_ASAP7_75t_SL", "FILLER_ASAP7_75t_SRAM", 
     "FILLERxp5_ASAP7_75t_R", "FILLERxp5_ASAP7_75t_L", "FILLERxp5_ASAP7_75t_SL", "FILLERxp5_ASAP7_75t_SRAM"
   ],
+
+.. _full_schema:
+
+Full Schema
+-----------
+
+Note that in the the schema tables presented below, items with ``#/definitions/<class_name>`` are defined in other schema tables. This is done for documentation clarity, but in your JSON file, those items would be hierarchically nested.
+
+.. jsonschema:: schema.json
+   :lift_definitions:
